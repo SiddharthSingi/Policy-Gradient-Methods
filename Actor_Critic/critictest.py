@@ -56,7 +56,7 @@ class PGAgent():
         # Discount factor
         self.gamma = 0.99
         # Bias Variance tradeoff (higher value results in high variance, low bias)
-        self.gae_lambda = 0.95
+        self.gae_lambda = 0.80
 
 
         self.env = gym.make('CartPole-v1')
@@ -69,7 +69,7 @@ class PGAgent():
         # These will be used for the agent to play using the current policy
         self.max_eps = 15
         # Max steps in mountaincar ex is 200
-        self.max_steps = 201
+        self.max_steps = 400
         # Should be more than max_eps * max_steps
         self.deque_len = 2500
         # documenting the stats
@@ -163,7 +163,7 @@ class PGAgent():
                 delta = reward - val
                 last_gae = delta
             else:
-                delta = reward + next_val - val
+                delta = reward + self.gamma*next_val - val
                 last_gae = delta + self.gamma*self.gae_lambda*last_gae
             
 
@@ -281,7 +281,7 @@ class PGAgent():
 
 vanilla_pg = PGAgent()
 # vanilla_pg.play(rendering=False)
-vanilla_pg.run(policy_updates = 100, show_renders_every = 40, renders=True)
+vanilla_pg.run(policy_updates = 50, show_renders_every = 20, renders=False)
 # Comment out when you want to see plotted rewards over episodes
 vanilla_pg.plot_rewards()
 
