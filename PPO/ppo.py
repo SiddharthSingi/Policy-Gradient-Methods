@@ -3,6 +3,7 @@ from torch import nn
 from torch.distributions import Categorical
 import torch.nn.functional as F
 import gym
+import os
 from collections import deque
 import matplotlib.pyplot as plt 
 import numpy as np
@@ -69,7 +70,7 @@ class PGAgent():
         # These will be used for the agent to play using the current policy
         self.max_eps = 10
         # Max steps in mountaincar ex is 200
-        self.max_steps = 400
+        self.max_steps = 1200
 
         # documenting the stats
         self.avg_over = 5 # episodes
@@ -115,7 +116,6 @@ class PGAgent():
         # Sample in categorical finds probability first and then samples values according to that prob
         return action.item()
 
-
     def reward_to_go(self, traj_dones, traj_rewards):
         # This gives the reward to go for each transition in the batch
         rew_to_go_list = []
@@ -131,7 +131,6 @@ class PGAgent():
         rew_to_go_list = reversed(rew_to_go_list)
         return list(rew_to_go_list)
 
-    def gae_loss(self):
         # print('len of traj: ', len(self.traj_logprobs))
         # print('type: ', type(self.traj_logprobs[0]))
         # print('is leaf: ', self.traj_logprobs[0].is_leaf)
@@ -348,25 +347,29 @@ class PGAgent():
         self.train_ppo()
 
 
-    def run(self, policy_updates = 65, show_renders_every = 20, renders = True):
+    def run(self, model_name, policy_updates = 65, show_renders_every = 20, renders = True):
         for i in range(policy_updates):
             if i%show_renders_every==0:
-                vanilla_pg.play(rendering=renders)
+                self.play(rendering=renders)
             else:
-                vanilla_pg.play(rendering=False)
+                self.play(rendering=False)
             print(f" Policy updated {i} times")
+        
+        torch.save(self.actor_net.state_dict(), model_name)
+        torch.save(self.critic_net.state_dict(), os.path.join('PPO', 'critic_500.pt'))
+        print('model saved at: ', model_name)
 
     def plot_rewards(self, avg_over=10):
-        graph_x = np.arange(vanilla_pg.stats['episode'])[::avg_over]
+        graph_x = np.arange(self.stats['episode'])[::avg_over]
         graph_y = self.stats['ep_rew'][::avg_over]
         plt.plot(graph_x, graph_y)
         plt.show()
 
 
 
-vanilla_pg = PGAgent()
+ppo = PGAgent()
 # vanilla_pg.play(rendering=False)
-vanilla_pg.run(policy_updates = 200, show_renders_every = 20, renders=False)
+ppo.run(model_name=os.path.join('PPO', 'ppo_500.pt'), policy_updates = 500, show_renders_every = 100, renders=False)
 # Comment out when you want to see plotted rewards over episodes
-vanilla_pg.plot_rewards()
+ppo.plot_rewards()
 
